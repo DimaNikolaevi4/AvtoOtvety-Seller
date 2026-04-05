@@ -1,0 +1,296 @@
+/* =======================================================
+   components.css — переиспользуемые компоненты и утилиты
+   ======================================================= */
+
+/* ===== CSS-переменные (для единообразия) ===== */
+:root {
+  /* Цвета (оставлены оригинальные) */
+  --color-primary: #3b0721;
+  --color-warning-bg: #fff3cd;
+  --color-warning-border: #ffc107;
+  --color-warning-text: #856404;
+  
+  /* Тени */
+  --shadow-sm: 0 0.125rem 0.25rem rgba(0,0,0,0.075);
+  --shadow-md: 0 0.5rem 1rem rgba(0,0,0,0.1);
+  --shadow-lg: 0 1rem 3rem rgba(0,0,0,0.175);
+  
+  /* Анимации */
+  --transition-fast: 0.2s ease;
+  --transition-normal: 0.3s ease;
+}
+
+/* ===== Служебные классы ===== */
+.transition-all {
+  transition: all var(--transition-fast);
+}
+
+/* Унифицируем переходы для всех «поднимающихся» элементов */
+.hover-lift,
+.card-hover,
+.marketplace-card,
+.feedback-card {
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+  will-change: transform, box-shadow; /* оптимизация анимации */
+}
+.hover-lift:hover,
+.card-hover:hover,
+.marketplace-card:hover,
+.feedback-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-md);
+}
+
+.hover-shadow {
+  transition: box-shadow var(--transition-fast);
+}
+.hover-shadow:hover {
+  box-shadow: var(--shadow-md);
+}
+
+/* ===== Карточки ===== */
+.card-stats {
+  border-left: 4px solid var(--color-primary);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+  will-change: transform, box-shadow;
+}
+.card-stats:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-md);
+}
+
+/* Специфичный для marketplace-card — чуть меньше подъём */
+.marketplace-card:hover {
+  transform: translateY(-3px);
+}
+
+/* Для feedback-card — ещё меньше */
+.feedback-card:hover {
+  transform: translateY(-2px);
+}
+
+.profile-card {
+  transition: box-shadow var(--transition-fast);
+}
+.profile-card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+/* ===== Элементы ===== */
+.marketplace-logo {
+  height: 40px;
+  width: auto;
+  object-fit: contain;
+}
+
+.avatar-preview {
+  width: 120px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 50%;
+  margin: 0 auto;
+  transition: transform var(--transition-fast);
+}
+.avatar-preview:hover {
+  transform: scale(1.02);
+}
+
+.btn {
+  transition: transform var(--transition-fast), background-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+.btn:hover {
+  transform: translateY(-1px);
+}
+.btn:active {
+  transform: translateY(0);
+}
+
+.test-mode-banner {
+  background-color: var(--color-warning-bg);
+  border-left: 4px solid var(--color-warning-border);
+  padding: 0.75rem 1rem;
+  margin-bottom: 1.5rem;
+  border-radius: 0.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all var(--transition-fast);
+}
+.test-mode-banner i {
+  font-size: 1.5rem;
+  color: var(--color-warning-text);
+}
+.test-mode-banner span {
+  font-weight: 500;
+  color: var(--color-warning-text);
+}
+
+/* ===== Анимация для flash-сообщений ===== */
+.alert {
+  transition: opacity 0.3s ease;
+}
+
+/* ===== Переключатель (toggle) — малый размер ===== */
+.toggle-switch-sm {
+  position: relative;
+  display: inline-block;
+  width: 40px;
+  height: 22px;
+}
+
+.toggle-switch-sm input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-switch-sm .slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: .4s;
+  border-radius: 22px;
+}
+
+.toggle-switch-sm .slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 2px;
+  bottom: 2px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+}
+
+.toggle-switch-sm input:checked + .slider {
+  background-color: #0d6efd;
+}
+
+.toggle-switch-sm input:checked + .slider:before {
+  transform: translateX(18px);
+}
+
+.toggle-switch-sm input:disabled + .slider {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ===== Переключатель (toggle) ===== */
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 60px;
+  height: 34px;
+}
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: 0.4s;
+  border-radius: 34px;
+}
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 26px;
+  width: 26px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: 0.4s;
+  border-radius: 50%;
+}
+input:checked + .slider {
+  background-color: var(--color-primary);
+}
+input:checked + .slider:before {
+  transform: translateX(26px);
+}
+
+/* ===== Утилиты ===== */
+.sticky-top-offset {
+  top: 80px;
+}
+
+.container-narrow {
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+/* ===== Адаптивность (группировка по брейкпоинтам) ===== */
+@media (max-width: 768px) {
+  .toggle-switch {
+    width: 50px;
+    height: 28px;
+  }
+  .slider:before {
+    height: 22px;
+    width: 22px;
+    left: 3px;
+    bottom: 3px;
+  }
+  input:checked + .slider:before {
+    transform: translateX(22px);
+  }
+  
+  .marketplace-logo {
+    height: 32px;
+  }
+  
+  .avatar-preview {
+    width: 100px;
+    height: 100px;
+  }
+}
+
+@media (max-width: 480px) {
+  .marketplace-logo {
+    height: 28px;
+  }
+  
+  .avatar-preview {
+    width: 80px;
+    height: 80px;
+  }
+}
+
+/* ===== Доступность: уменьшение анимации по запросу ===== */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  
+  .hover-lift,
+  .card-hover,
+  .marketplace-card,
+  .feedback-card,
+  .card-stats,
+  .avatar-preview,
+  .btn {
+    transform: none !important;
+    will-change: auto !important;
+  }
+}

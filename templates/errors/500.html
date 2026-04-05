@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block title %}Ошибка сервера - 500{% endblock %}
+
+{% block content %}
+<div class="container text-center mt-5 py-5">
+    <div class="error-page">
+        <h1 class="display-1 text-warning">500</h1>
+        <h2 class="mb-4">Внутренняя ошибка сервера</h2>
+        <p class="lead text-muted mb-4">
+            Что-то пошло не так на нашей стороне. Мы уже работаем над исправлением проблемы.
+            Пожалуйста, попробуйте обновить страницу или зайдите позже.
+        </p>
+        <div class="mt-4">
+            <a href="{{ url_for('index') }}" class="btn btn-primary btn-lg me-2">
+                Вернуться на главную
+            </a>
+            <button onclick="location.reload()" class="btn btn-outline-secondary btn-lg">
+                Обновить страницу
+            </button>
+        </div>
+    </div>
+</div>
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/errors.css') }}">
+{% endblock %}

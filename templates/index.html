@@ -1,0 +1,242 @@
+{% extends "base.html" %}
+
+{% block title %}АвтоОтветыСеллер — автоматические ответы на отзывы Wildberries, Ozon, Яндекс Маркет{% endblock %}
+
+{% block content %}
+    <section class="hero">
+        <div class="container hero__container">
+            <div class="hero__content">
+                <h1 class="hero__title" >Автоматические ответы на отзывы <span class="hero__accent">для селлеров</span></h1>
+                <p class="hero__subtitle">Нейросеть пишет вежливые, уместные ответы на отзывы Wildberries, Ozon и Яндекс Маркет. Экономия времени и рост рейтинга.</p>
+                <a href="#form" class="button button--primary">Присоединиться к бета-тесту</a>
+            </div>
+            <div class="hero__image">
+                <img src="{{ url_for('static', filename='images/avtomaticheskie-otvety-na-otzyvy.webp') }}" 
+                     class="hero__img"
+                     alt="Автоматические ответы на отзывы Wildberries, Ozon и Яндекс Маркет: нейросеть для селлеров">
+            </div>
+        </div>
+    </section>
+
+    <div class="marketplaces">
+        <div class="container marketplaces__container">
+            <span class="marketplaces__label">Поддерживаем:</span>
+            <div class="marketplaces__icons">
+                <img src="{{ url_for('static', filename='images/ozon-logo.png') }}" 
+                     alt="Ozon — маркетплейс, поддерживаемый сервисом автоматических ответов на отзывы"
+                     class="marketplaces__icon">
+                <img src="{{ url_for('static', filename='images/wildberries-logo.png') }}" 
+                     alt="Wildberries — маркетплейс, поддерживаемый сервисом автоматических ответов на отзывы"
+                     class="marketplaces__icon">
+                <img src="{{ url_for('static', filename='images/yandex-market-logo.png') }}" 
+                     alt="Яндекс Маркет — маркетплейс, поддерживаемый сервисом автоматических ответов на отзывы"
+                     class="marketplaces__icon">
+            </div>
+        </div>
+    </div>
+
+    <section id="about" class="features">
+        <div class="container">
+            <h2 class="section-title">Почему селлеры выбирают нас</h2>
+            <div class="features__grid">
+                <div class="feature-card">
+                    <div class="feature-card__icon">💡</div>
+                    <h3 class="feature-card__title">Генерация за секунды</h3>
+                    <p class="feature-card__text">ИИ анализирует отзыв и создаёт персонализированный ответ в стиле вашего бренда. Больше не нужно тратить часы на написание ответов.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-card__icon">📈</div>
+                    <h3 class="feature-card__title">Рост рейтинга +17%</h3>
+                    <p class="feature-card__text">По данным наших бета-тестеров, регулярные ответы на отзывы увеличивают рейтинг карточки товара на 17% за 30 дней.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-card__icon">🔌</div>
+                    <h3 class="feature-card__title">Интеграция с API</h3>
+                    <p class="feature-card__text">Wildberries, Ozon, Яндекс Маркет — всё в одном окне. Работаем через официальные API, безопасно и без риска блокировок.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-card__icon">💰</div>
+                    <h3 class="feature-card__title">Экономия оборотки</h3>
+                    <p class="feature-card__text">Освобождаем до 10 часов в неделю, которые вы тратите на рутину. Сосредоточьтесь на масштабировании и новых категориях.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="howitworks" class="how-it-works">
+        <div class="container">
+            <h2 class="section-title">Как работает сервис ответов на отзывы</h2>
+            <div class="steps">
+                <div class="step">
+                    <div class="step__number">1</div>
+                    <h3 class="step__title">Подключаете маркетплейсы</h3>
+                    <p class="step__text">Добавляете API-ключи Wildberries, Ozon или Яндекс Маркета. Сервис получает доступ к вашим отзывам.</p>
+                </div>
+                <div class="step">
+                    <div class="step__number">2</div>
+                    <h3 class="step__title">Настраиваете стиль ответов</h3>
+                    <p class="step__text">Выбираете тон общения (дружелюбный, деловой) и правила для разных типов отзывов (положительные, негативные).</p>
+                </div>
+                <div class="step">
+                    <div class="step__number">3</div>
+                    <h3 class="step__title">Нейросеть генерирует ответы</h3>
+                    <p class="step__text">Искусственный интеллект анализирует текст отзыва и предлагает готовый ответ. Вы можете отредактировать его перед публикацией.</p>
+                </div>
+                <div class="step">
+                    <div class="step__number">4</div>
+                    <h3 class="step__title">Публикуете или отправляете на доработку</h3>
+                    <p class="step__text">Одним кликом ответ отправляется на маркетплейс. Все действия логируются для отчётности.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="stats">
+        <div class="container stats__container">
+            <div class="stat-item">
+                <div class="stat-number">
+                    <span class="stat-number__value" data-start="0" data-end="90">0</span>%
+                </div>
+                <div class="stat-desc">экономии времени на ответах</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">
+                    <span class="stat-number__value" data-start="0" data-end="17">0</span>%
+                </div>
+                <div class="stat-desc">рост рейтинга карточки товара</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">
+                    <span class="stat-number__value" data-start="0" data-end="100">0</span>+
+                </div>
+                <div class="stat-desc">отзывов в день обрабатывает один селлер</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">
+                    <span class="stat-number__value" data-start="0" data-end="24">0</span>/7
+                </div>
+                <div class="stat-desc">автоматическая работа без выходных</div>
+            </div>
+        </div>
+    </section>
+
+    <section id="faq" class="faq">
+    <div class="container">
+        <h2 class="section-title">Часто задаваемые вопросы</h2>
+        <div class="faq__list">
+            <!-- Первые 5 вопросов (без изменений) -->
+            <div class="faq-item">
+                <h3 class="faq-item__question">Подходит ли сервис для Wildberries, Ozon и Яндекс Маркет?</h3>
+                <div class="faq-item__answer">Да, наш сервис поддерживает автоматические ответы на отзывы Wildberries, Ozon и Яндекс Маркет. Мы интегрируемся через официальные API, поэтому всё безопасно и соответствует правилам площадок.</div>
+            </div>
+            <div class="faq-item">
+                <h3 class="faq-item__question">Нужно ли мне самому писать ответы?</h3>
+                <div class="faq-item__answer">Нет, нейросеть генерирует ответы на отзывы автоматически. Вы можете редактировать их, если хотите добавить индивидуальности, но в большинстве случаев готовые ответы подходят идеально.</div>
+            </div>
+            <div class="faq-item">
+                <h3 class="faq-item__question">Сколько стоит использование?</h3>
+                <div class="faq-item__answer">На период бета-тестирования сервис бесплатный. После запуска будет тарифная сетка, ориентированная на объём ответов. Для селлеров с небольшим количеством отзывов предусмотрен льготный тариф.</div>
+            </div>
+            <div class="faq-item">
+                <h3 class="faq-item__question">Как нейросеть обрабатывает негативные отзывы?</h3>
+                <div class="faq-item__answer">Мы обучили модель на тысячах примеров корректных ответов на негативные отзывы. ИИ сохраняет вежливость, предлагает решение проблемы или извиняется, что снижает конфликтность и улучшает репутацию.</div>
+            </div>
+            <div class="faq-item">
+                <h3 class="faq-item__question">Могу ли я использовать сервис, если у меня всего несколько отзывов в месяц?</h3>
+                <div class="faq-item__answer">Да, сервис подходит как для крупных селлеров с сотнями отзывов ежедневно, так и для малого бизнеса. Генерация ответов на отзывы экономит время даже при небольшом потоке.</div>
+            </div>
+
+            <!-- Статья 1 -->
+            <div class="faq-item">
+                <h3 class="faq-item__question">Как правильно отвечать на негативные отзывы на Wildberries?</h3>
+                <div class="faq-item__answer">
+                    <p>Пошаговая инструкция, шаблоны и примеры ответов, которые помогут сохранить репутацию и повысить рейтинг карточки товара.</p>
+                    <p><a href="{{ url_for('article_negative_reviews') }}" class="button button--secondary" style="margin-top: 0.5rem;">Читать статью →</a></p>
+                </div>
+            </div>
+
+            <!-- Статья 2 -->
+            <div class="faq-item">
+                <h3 class="faq-item__question">Готовые шаблоны ответов на отзывы на Wildberries и Ozon</h3>
+                <div class="faq-item__answer">
+                    <p>Скачайте и используйте готовые фразы для ответов на положительные и негативные отзывы. Примеры для любых ситуаций.</p>
+                    <p><a href="{{ url_for('article_templates') }}" class="button button--secondary" style="margin-top: 0.5rem;">Читать статью →</a></p>
+                </div>
+            </div>
+
+            <!-- Статья 3 -->
+            <div class="faq-item">
+                <h3 class="faq-item__question">Как автоматизировать ответы на отзывы с помощью нейросети?</h3>
+                <div class="faq-item__answer">
+                    <p>Узнайте, как нейросети помогают экономить время и повышать рейтинг на маркетплейсах. Пошаговое руководство и примеры.</p>
+                    <p><a href="{{ url_for('article_auto') }}" class="button button--secondary" style="margin-top: 0.5rem;">Читать статью →</a></p>
+                </div>
+            </div>
+
+            <!-- 🔹 НОВЫЙ ВОПРОС: Отключение анимации курсора -->
+            <div class="faq-item">
+                <h3 class="faq-item__question">Как отключить анимацию курсора?</h3>
+                <div class="faq-item__answer">
+                    <p>Если анимация курсора отвлекает или вызывает дискомфорт, вы можете её отключить в настройках профиля.</p>
+                    <p><strong>Способы отключения:</strong></p>
+                    <ul style="margin: 0.5rem 0 1rem 1.5rem; color: inherit;">
+                        <li>Через настройки в <a href="{{ url_for('profile') }}" style="color: inherit; text-decoration: underline;">профиле пользователя</a></li>
+                        <li>Горячими  клавиш Ctrl + Shift + C</li>
+                    </ul>
+                    <p>Настройка сохраняется автоматически и будет действовать на всех устройствах, где вы вошли в аккаунт.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+    <section class="progress-section">
+        <div class="container">
+            <a href="{{ url_for('progress') }}" class="progress-link">
+                <h3 class="progress-title">Скоро запуск бета-теста →</h3>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 40%;">40%</div>
+                </div>
+                <p class="progress-text">Выполнено 40% задач. Подробнее об этапах →</p>
+            </a>
+        </div>
+    </section>
+
+    <section class="beta-section">
+        <div class="container">
+            <h2 class="beta-section__title">🚀 Закрытое бета-тестирование</h2>
+
+            <div class="beta-description">
+                <p class="beta-intro">
+                    Мы запускаем закрытое тестирование <strong>АвтоОтветыСеллер</strong> —
+                    умного помощника для продавцов на Wildberries, Ozon и Яндекс.Маркете.
+                </p>
+
+                <h3 class="beta-subtitle">Что вы получите как бета-тестер:</h3>
+                <ul class="beta-list">
+                    <li>✅ Бесплатный доступ ко всем функциям на период теста</li>
+                    <li>✅ Возможность влиять на развитие продукта (ваш фидбек = новые фичи)</li>
+                    <li>✅ Приоритетная поддержка и быстрые ответы на вопросы</li>
+                    <li>✅ Специальные условия при переходе на платный тариф</li>
+                </ul>
+
+                <p class="beta-warning">
+                    <strong>⚠️ Важно:</strong> Это бета-версия. Возможны небольшие сбои и изменения в интерфейсе.
+                    Мы собираем обратную связь, чтобы сделать продукт идеальным перед публичным запуском.
+                </p>
+
+                <div class="beta-actions">
+                    <a href="{{ url_for('beta_info') }}" class="beta-link">📖 Подробнее о бета-тесте →</a>
+                    <a href="{{ url_for('register') }}" class="button button--primary">🎯 Зарегистрироваться и получить доступ</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Подключите библиотеку particles.js -->
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+    <div id="particles-js" style="position: absolute; width: 100%; height: 100%; top:0; left:0; z-index: -1;"></div>
+    
+    <!-- Подключение вынесенных скриптов -->
+    <script src="{{ url_for('static', filename='js/index.js') }}"></script>
+{% endblock %}

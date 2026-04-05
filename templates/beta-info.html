@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block title %}Бета-тест Marketplace AI Bot{% endblock %}
+
+{% block content %}
+<div class="container mt-5 py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-body p-5">
+                    <h1 class="text-center mb-4">🎉 Добро пожаловать в бета-тест!</h1>
+                    
+                    <p class="lead text-center text-muted mb-4">
+                        Спасибо, что помогаете нам сделать <strong>Marketplace AI Bot</strong> лучше.
+                    </p>
+
+                    <div class="mb-4">
+                        <h3>📋 Что можно делать:</h3>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">✅ Регистрироваться и управлять профилем</li>
+                            <li class="list-group-item">✅ Отправлять предложения по улучшению</li>
+                            <li class="list-group-item">✅ Автоматизировать ответы на отзывы Wildberries, Ozon и Яндекс Маркет</li>
+                            <li class="list-group-item">✅ Использовать шаблоны ответов от нейросети</li>
+                            <li class="list-group-item">✅ Читать блог с полезными советами</li>
+                        </ul>
+                    </div>
+
+                    <div class="alert alert-warning" role="alert">
+                        <h5 class="alert-heading">⚠️ Важно!</h5>
+                        <p>
+                            Это <strong>бета-версия</strong>. Возможны нестабильность работы и изменения интерфейса.
+                            Мы активно работаем над улучшением сервиса.
+                        </p>
+                        <hr>
+                        <p class="mb-0 small">
+                            Ваши данные защищены в соответствии с Федеральным законом № 152-ФЗ «О персональных данных».
+                        </p>
+                    </div>
+
+                    <div class="alert alert-info" role="alert">
+                        <h5 class="alert-heading">🐛 Нашли баг или есть предложение?</h5>
+                        <p class="mb-2">
+                            Пожалуйста, сообщите нам об ошибке или отправьте предложение через форму обратной связи.
+                        </p>
+                        <p class="mb-0">
+                            Email поддержки: <a href="mailto:support@автоответыселлер.рф">support@автоответыселлер.рф</a>
+                        </p>
+                    </div>
+
+                    <div class="text-center mt-4">
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-primary btn-lg me-2">
+                            Перейти в кабинет
+                        </a>
+                        <a href="{{ url_for('index') }}" class="btn btn-outline-secondary btn-lg">
+                            На главную
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,37 @@
+# -*- coding: utf-8 -*-
+"""
+Точка входа для Passenger (BeGet)
+⚠️ BeGet требует, чтобы переменная называлась 'application'
+
+ШАБЛОН: Скопируйте этот файл в passenger_wsgi.py и при необходимости отредактируйте пути.
+"""
+import sys
+import os
+
+# Автоматическое определение корня (работает в большинстве случаев)
+PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
+
+# ЕСЛИ АВТОМАТИКА НЕ СРАБОТАЛА НА HOSTING:
+# Раскомментируйте строку ниже и впишите ваш полный путь вручную:
+# PROJECT_ROOT = '/home/USERNAME/PATH_TO_PROJECT'
+
+if PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, PROJECT_ROOT)
+
+# Путь к site-packages. Проверьте версию Python в названии папки (3.10, 3.8 и т.д.)
+# На BeGet обычно: venv/lib/python3.X/site-packages
+venv_site = os.path.join(PROJECT_ROOT, 'venv', 'lib', 'python3.10', 'site-packages')
+
+# Если у вас другая версия Python, измените 'python3.10' выше на актуальную
+
+if os.path.isdir(venv_site) and venv_site not in sys.path:
+    sys.path.insert(0, venv_site)
+
+# Загрузка .env
+try:
+    from dotenv import load_dotenv
+    load_dotenv(os.path.join(PROJECT_ROOT, '.env'))
+except ImportError:
+    pass
+
+from app import app as application

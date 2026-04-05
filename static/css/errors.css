@@ -1,0 +1,15 @@
+/* Стили для страниц ошибок 404 и 500 */
+.error-page {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.error-page h1 {
+    font-size: 8rem;
+    font-weight: bold;
+    line-height: 1;
+}
+
+.error-page h2 {
+    font-size: 2rem;
+}

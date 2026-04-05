@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% block title %}Руководство по панели управления{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <h1 class="mb-4">Руководство по панели управления</h1>
+    
+    <div class="row">
+        <div class="col-lg-3">
+            <div class="list-group sticky-top sticky-top-offset">
+                <a href="#dashboard" class="list-group-item list-group-item-action">Кабинет</a>
+                <a href="#statistics" class="list-group-item list-group-item-action">Статистика</a>
+                <a href="#marketplaces" class="list-group-item list-group-item-action">Подключение маркетплейсов</a>
+                <a href="#auto-reply" class="list-group-item list-group-item-action">Автоматические ответы</a>
+                <a href="#profile" class="list-group-item list-group-item-action">Профиль</a>
+                <a href="#faq" class="list-group-item list-group-item-action">Часто задаваемые вопросы</a>
+            </div>
+        </div>
+        
+        <div class="col-lg-9">
+            <section id="dashboard" class="mb-5">
+                <h2>Кабинет</h2>
+                <p>Главная страница после входа. Здесь вы видите общую статистику, сводку по отзывам, а также можете управлять подключением маркетплейсов и настройками.</p>
+                <ul>
+                    <li><strong>Всего отзывов</strong> – количество обработанных отзывов за всё время.</li>
+                    <li><strong>Средняя оценка</strong> – средний балл по всем отзывам.</li>
+                    <li><strong>Запросов сегодня</strong> – количество запросов на генерацию ответов за текущий день.</li>
+                    <li><strong>Активных площадок</strong> – количество маркетплейсов, для которых добавлен API-ключ.</li>
+                </ul>
+            </section>
+
+            <section id="statistics" class="mb-5">
+                <h2>Статистика и графики</h2>
+                <p>Сводка по отзывам показывает количество положительных, нейтральных и отрицательных отзывов. График динамики позволяет выбрать период и отследить изменения количества отзывов.</p>
+            </section>
+
+            <section id="marketplaces" class="mb-5">
+                <h2>Подключение маркетплейсов</h2>
+                <p>Для каждого маркетплейса (Wildberries, Ozon, Яндекс Маркет) нужно добавить API-ключ. Нажмите «Настроить», введите ключ и сохраните. После этого статус изменится на «Подключён», и вы сможете загружать отзывы.</p>
+                <p>Кнопка «Создать ответ» позволяет вручную сгенерировать ответ на конкретный отзыв с помощью ИИ.</p>
+            </section>
+
+            <section id="auto-reply" class="mb-5">
+                <h2>Автоматические ответы</h2>
+                <p>Включите переключатель «Автоматические ответы», чтобы сервис самостоятельно отвечал на новые отзывы. Ответы генерируются на основе ваших настроек и тона отзыва.</p>
+            </section>
+
+            <section id="profile" class="mb-5">
+                <h2>Профиль</h2>
+                <p>Здесь вы можете изменить личные данные (имя, email, пароль), загрузить аватар, настроить уведомления и управлять автоответами. Также доступна история входов и опция удаления аккаунта.</p>
+            </section>
+
+            <section id="faq" class="mb-5">
+                <h2>Часто задаваемые вопросы</h2>
+                <div class="accordion" id="faqAccordion">
+                    <div class="accordion-item">
+                        <h3 class="accordion-header">
+                            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
+                                Как получить API-ключ Wildberries?
+                            </button>
+                        </h3>
+                        <div id="faq1" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                API-ключ можно получить в личном кабинете Wildberries в разделе «Настройки» → «API». Скопируйте ключ и вставьте в поле при настройке.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <h3 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
+                                Как работает генерация ответов?
+                            </button>
+                        </h3>
+                        <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                На основе текста отзыва нейросеть подбирает подходящий ответ: вежливый, нейтральный или конструктивный. Вы можете отредактировать его перед отправкой.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <h3 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
+                                Можно ли отключить автоответы для конкретного маркетплейса?
+                            </button>
+                        </h3>
+                        <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                В текущей версии автоответы включаются глобально. В будущем планируется настройка для каждого маркетплейса отдельно.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+</div>
+{% endblock %}

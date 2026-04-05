@@ -1,0 +1,112 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Предложения пользователей{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>📋 Предложения пользователей</h2>
+    <span class="badge bg-primary">{{ pagination.total }} всего</span>
+</div>
+
+{% if suggestions %}
+    <div class="table-responsive admin-table">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th style="width: 60px;">ID</th>
+                    <th style="width: 180px;">Дата создания</th>
+                    <th style="width: 250px;">Email пользователя</th>
+                    <th>Текст предложения</th>
+                    <th style="width: 100px;">Статус</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for suggestion in suggestions %}
+                <tr>
+                    <td><strong>{{ suggestion.id }}</strong></td>
+                    <td>{{ suggestion.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
+                    <td>
+                        {% if suggestion.user %}
+                            {{ suggestion.user.email }}
+                        {% else %}
+                            <em class="text-muted">unknown</em>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="suggestion-text" title="{{ suggestion.text }}">
+                            {{ suggestion.text }}
+                        </div>
+                    </td>
+                    <td>
+                        <span class="status-badge status-new">new</span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- Пагинация -->
+    {% if pagination.pages > 1 %}
+    <nav aria-label="Пагинация" class="mt-4">
+        <ul class="pagination justify-content-center">
+            <!-- Первая страница -->
+            {% if pagination.page > 1 %}
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('admin_suggestions', page=1) }}">← Первая</a>
+            </li>
+            {% endif %}
+            
+            <!-- Предыдущая -->
+            {% if pagination.has_prev %}
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('admin_suggestions', page=pagination.page - 1) }}">← Назад</a>
+            </li>
+            {% endif %}
+            
+            <!-- Номера страниц -->
+            {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                {% if page_num %}
+                    {% if page_num == pagination.page %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ page_num }}</span>
+                    </li>
+                    {% else %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('admin_suggestions', page=page_num) }}">{{ page_num }}</a>
+                    </li>
+                    {% endif %}
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">...</span>
+                </li>
+                {% endif %}
+            {% endfor %}
+            
+            <!-- Следующая -->
+            {% if pagination.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('admin_suggestions', page=pagination.page + 1) }}">Вперёд →</a>
+            </li>
+            {% endif %}
+            
+            <!-- Последняя страница -->
+            {% if pagination.page < pagination.pages %}
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('admin_suggestions', page=pagination.pages) }}">Последняя →</a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    <p class="text-center text-muted">
+        Страница {{ pagination.page }} из {{ pagination.pages }} (показано {{ suggestions|length }} из {{ pagination.total }})
+    </p>
+    {% endif %}
+    
+{% else %}
+    <div class="alert alert-info text-center py-5">
+        <h4>🎉 Пока нет предложений — будьте первым!</h4>
+        <p class="mb-0">Предложения от пользователей появятся здесь.</p>
+    </div>
+{% endif %}
+{% endblock %}

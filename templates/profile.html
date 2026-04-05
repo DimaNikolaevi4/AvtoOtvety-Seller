@@ -1,0 +1,235 @@
+{% extends "base.html" %}
+
+{% block title %}Профиль{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <h2 class="mb-4">Мой профиль</h2>
+
+    <div class="row">
+        <!-- Левая колонка: аватар, личная информация, уведомления -->
+        <div class="col-md-6 mb-4">
+            <!-- Аватар -->
+            <div class="card profile-card mb-4">
+                <div class="card-header">
+                    <h5>Аватар</h5>
+                </div>
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        {% if user.avatar %}
+                            <img src="{{ url_for('static', filename='avatars/' + user.avatar) }}" alt="Аватар" class="rounded-circle avatar-preview">
+                        {% else %}
+                            <div class="rounded-circle bg-secondary d-inline-flex align-items-center justify-content-center avatar-preview display-3 text-white">
+                                {{ user.name[0].upper() if user.name else user.email[0].upper() }}
+                            </div>
+                        {% endif %}
+                    </div>
+                    <form method="POST" action="{{ url_for('upload_avatar') }}" enctype="multipart/form-data">
+                        <div class="mb-3">
+                            <input type="file" class="form-control" name="avatar" accept="image/*" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-sm">Загрузить новый аватар</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Личная информация -->
+            <div class="card profile-card mb-4">
+                <div class="card-header">
+                    <h5>Личная информация</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('profile') }}">
+                        <input type="hidden" name="action" value="update_profile">
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Имя</label>
+                            <input type="text" class="form-control" id="name" name="name" value="{{ user.name or '' }}">
+                        </div>
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" name="email" value="{{ user.email }}" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Сохранить изменения</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Настройки уведомлений -->
+            <div class="card profile-card mb-4">
+                <div class="card-header">
+                    <h5>Уведомления</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('profile') }}">
+                        <input type="hidden" name="action" value="update_notifications">
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="email_notifications" name="email_notifications" {% if user.email_notifications %}checked{% endif %}>
+                            <label class="form-check-label" for="email_notifications">
+                                Получать уведомления на email
+                            </label>
+                        </div>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="push_notifications" name="push_notifications" {% if user.push_notifications %}checked{% endif %}>
+                            <label class="form-check-label" for="push_notifications">
+                                Push-уведомления в браузере
+                            </label>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-sm mt-2">Сохранить настройки</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Настройка автоответов -->
+            <div class="card profile-card mb-4">
+                <div class="card-header">
+                    <h5>Автоответы</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('profile') }}">
+                        <input type="hidden" name="action" value="update_auto_reply">
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="auto_reply_enabled" name="auto_reply_enabled" {% if user.auto_reply_enabled %}checked{% endif %}>
+                            <label class="form-check-label" for="auto_reply_enabled">
+                                Автоматически отвечать на отзывы (при поступлении)
+                            </label>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-sm mt-2">Сохранить</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Правая колонка: смена пароля, история входов, удаление аккаунта -->
+        <div class="col-md-6 mb-4">
+            <!-- Смена пароля -->
+            <div class="card profile-card mb-4">
+                <div class="card-header">
+                    <h5>Смена пароля</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('profile') }}">
+                        <input type="hidden" name="action" value="change_password">
+                        <div class="mb-3">
+                            <label for="old_password" class="form-label">Текущий пароль</label>
+                            <input type="password" class="form-control" id="old_password" name="old_password" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="new_password" class="form-label">Новый пароль</label>
+                            <input type="password" class="form-control" id="new_password" name="new_password" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="confirm_password" class="form-label">Подтверждение пароля</label>
+                            <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Изменить пароль</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- История входов -->
+            <div class="card profile-card mb-4">
+                <div class="card-header">
+                    <h5>История входов</h5>
+                </div>
+                <div class="card-body">
+                    {% if login_history %}
+                        <div class="table-responsive">
+                            <table class="table table-sm login-history-table">
+                                <thead>
+                                    <tr>
+                                        <th>Дата и время</th>
+                                        <th>IP-адрес</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for record in login_history %}
+                                    <tr>
+                                        <td>{{ record.login_time.strftime('%d.%m.%Y %H:%M') }}</td>
+                                        <td>{{ record.ip_address or '—' }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted">История входов пока пуста.</p>
+                    {% endif %}
+                </div>
+            </div>
+<!-- Секция настроек курсора в профиле -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">🎨 Настройки интерфейса</h5>
+    </div>
+    <div class="card-body">
+        <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" id="cursorAnimationToggle" 
+                   {% if not cursor_disabled %}checked{% endif %}>
+            <label class="form-check-label" for="cursorAnimationToggle">
+                Анимированный курсор
+                <small class="text-muted d-block">
+                    Отключите, если анимация отвлекает или вызывает дискомфорт
+                </small>
+            </label>
+        </div>
+        <small class="text-muted">
+            💡 Также можно переключить сочетанием клавиш <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>C</kbd>
+        </small>
+    </div>
+</div>
+
+<script>
+    // Синхронизация переключателя в профиле с localStorage
+    document.addEventListener('DOMContentLoaded', function() {
+        const toggle = document.getElementById('cursorAnimationToggle');
+        const isDisabled = localStorage.getItem('cursor_animation_disabled') === 'true';
+        
+        // Устанавливаем начальное состояние
+        toggle.checked = !isDisabled;
+        
+        // Обработчик переключения
+        toggle.addEventListener('change', function() {
+            if (typeof window.toggleCursorAnimation === 'function') {
+                window.toggleCursorAnimation();
+            }
+        });
+    });
+</script>
+            <!-- Удаление аккаунта -->
+            <div class="card border-danger profile-card">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">Опасная зона</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">Удаление аккаунта приведёт к безвозвратной потере всех данных: ключей, истории ответов, настроек.</p>
+                    <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteAccountModal">
+                        Удалить аккаунт
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно подтверждения удаления -->
+<div class="modal fade" id="deleteAccountModal" tabindex="-1" aria-labelledby="deleteAccountModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteAccountModalLabel">Подтверждение удаления</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+            </div>
+            <div class="modal-body">
+                <p>Вы уверены, что хотите удалить свой аккаунт? Все данные будут потеряны без возможности восстановления.</p>
+                <p class="text-danger">Это действие необратимо!</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <form method="POST" action="{{ url_for('delete_account') }}">
+                    <button type="submit" class="btn btn-danger">Удалить аккаунт</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

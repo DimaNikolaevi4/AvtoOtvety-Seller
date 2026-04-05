@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+
+{% block title %}Этапы запуска — АвтоОтветыСеллер{% endblock %}
+
+{% block content %}
+    <section class="hero pb-4">
+        <div class="container">
+            <h1 class="hero__title text-center">Этапы запуска сервиса</h1>
+            <p class="hero__subtitle text-center mx-auto" style="max-width: 700px;">Мы открыто показываем прогресс, чтобы вы видели, как идёт работа над сервисом. Каждый завершённый этап приближает нас к запуску.</p>
+        </div>
+    </section>
+
+    <section class="features pt-4">
+        <div class="container">
+            <div class="steps" style="grid-template-columns: 1fr; max-width: 800px; margin: 0 auto;">
+                <!-- Этап 1 -->
+                <div class="step text-start">
+                    <div class="step__number" style="background: #701e47;">1</div>
+                    <h3 class="step__title">Этап 1: Создание представительства в интернете</h3>
+                    <p class="step__text"><strong>✅ Завершён</strong> — создан сайт, юридические страницы, настроен SSL, домен.</p>
+                </div>
+                <!-- Этап 2 -->
+                <div class="step text-start">
+                    <div class="step__number" style="background: #701e47;">2</div>
+                    <h3 class="step__title">Этап 2: Разработка бэкенда и панели управления</h3>
+                    <p class="step__text"><strong>✅ Завершён</strong> — установлен Python, Flask, база данных, авторизация, управление API-ключами.<br>
+                    <a href="https://github.com/DimaNikolaevi4/marketplace-ai-bot" target="_blank" rel="noopener noreferrer" style="color: #c2410c; text-decoration: none; font-weight: 500;">🔗 GitHub репозиторий проекта</a>
+                    </p>
+                </div>
+                <!-- Этап 3 -->
+                <div class="step text-start">
+                    <div class="step__number" style="background: #c2410c;">3</div>
+                    <h3 class="step__title">Этап 3: Интеграция с API маркетплейсов</h3>
+                    <p class="step__text"><strong>🔄 В процессе</strong> — начата интеграция с Wildberries, Ozon и Яндекс Маркет — в плане.</p>
+                </div>
+                <!-- Этап 4 -->
+                <div class="step text-start">
+                    <div class="step__number">4</div>
+                    <h3 class="step__title">Этап 4: Подключение нейросетей (OpenRouter + локальные модели)</h3>
+                    <p class="step__text"><strong>⏳ Ожидает</strong> — генерация ответов, роутинг, оптимизация стоимости.</p>
+                </div>
+                <!-- Этап 5 -->
+                <div class="step text-start">
+                    <div class="step__number">5</div>
+                    <h3 class="step__title">Этап 5: Тестирование и закрытый бета‑доступ</h3>
+                    <p class="step__text"><strong>⏳ Ожидает</strong> — приглашение первых пользователей, сбор обратной связи.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="stats mt-4">
+        <div class="container stats__container">
+            <div class="stat-item">
+                <div class="stat-number fs-1">40%</div>
+                <div class="stat-desc">выполнено от плана</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number fs-1">5</div>
+                <div class="stat-desc">основных этапов</div>
+            </div>
+        </div>
+    </section>
+
+    <section class="beta-section">
+        <div class="container">
+            <h2 class="beta-section__title">🚀 Закрытое бета-тестирование</h2>
+
+            <div class="beta-description">
+                <p class="beta-intro">
+                    Мы запускаем закрытое тестирование <strong>АвтоОтветыСеллер</strong> —
+                    умного помощника для продавцов на Wildberries, Ozon и Яндекс.Маркете.
+                </p>
+
+                <h3 class="beta-subtitle">Что вы получите как бета-тестер:</h3>
+                <ul class="beta-list">
+                    <li>✅ Бесплатный доступ ко всем функциям на период теста</li>
+                    <li>✅ Возможность влиять на развитие продукта (ваш фидбек = новые фичи)</li>
+                    <li>✅ Приоритетная поддержка и быстрые ответы на вопросы</li>
+                    <li>✅ Специальные условия при переходе на платный тариф</li>
+                </ul>
+
+                <p class="beta-warning">
+                    <strong>⚠️ Важно:</strong> Это бета-версия. Возможны небольшие сбои и изменения в интерфейсе.
+                    Мы собираем обратную связь, чтобы сделать продукт идеальным перед публичным запуском.
+                </p>
+
+                <div class="beta-actions">
+                    <a href="{{ url_for('beta_info') }}" class="beta-link">📖 Подробнее о бета-тесте →</a>
+                    <a href="{{ url_for('register') }}" class="button button--primary">🎯 Зарегистрироваться и получить доступ</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        // Обработка формы на странице прогресса
+        const progressForm = document.getElementById('progressEmailForm');
+        const progressMsg = document.getElementById('progressFormMessage');
+        if (progressForm) {
+            progressForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const formData = new FormData(progressForm);
+                try {
+                    const response = await fetch(progressForm.action, {
+                        method: 'POST',
+                        body: formData,
+                        headers: { 'Accept': 'application/json' }
+                    });
+                    const data = await response.json();
+                    if (response.ok && data.success) {
+                        progressMsg.textContent = data.message || '✅ Спасибо! Вы подписаны.';
+                        progressMsg.classList.add('form__message--success');
+                        progressMsg.classList.remove('form__message--error');
+                        progressForm.reset();
+                    } else {
+                        throw new Error(data.error || 'Ошибка отправки');
+                    }
+                } catch (error) {
+                    progressMsg.textContent = '❌ Ошибка. Попробуйте позже или напишите нам: support@автоответыселлер.рф';
+                    progressMsg.classList.add('form__message--error');
+                    progressMsg.classList.remove('form__message--success');
+                }
+            });
+        }
+    </script>
+{% endblock %}
