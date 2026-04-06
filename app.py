@@ -15,7 +15,7 @@ from flask_migrate import Migrate
 from dotenv import load_dotenv
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from flask_wtf import CSRFProtect
-from flask_wtf.csrf import generate_csrf
+from flask_wtf.csrf import generate_csrf, csrf_exempt   # <-- ДОБАВЛЕН csrf_exempt
 from werkzeug.utils import secure_filename
 from utils.wb_api import get_wb_feedbacks
 from utils.ozon_api import OzonAPI
@@ -560,14 +560,17 @@ def history():
     """Страница истории всех ответов пользователя"""
     reply_history = ReplyHistory.query.filter_by(user_id=current_user.id).order_by(ReplyHistory.created_at.desc()).all()
     return render_template('history.html', history=reply_history)
+
 # ==================== API ЭНДПОИНТЫ ====================
 @app.route('/api/chart-data')
+@csrf_exempt          # <-- ДОБАВЛЕНО
 @login_required
 def chart_data_api():
     period = request.args.get('period', default='7', type=int)
     return jsonify({'labels': [], 'values': []})
 
 @app.route('/api/generate-reply', methods=['POST'])
+@csrf_exempt          # <-- ДОБАВЛЕНО
 @login_required
 def generate_reply():
     data = request.get_json() or {}
@@ -576,6 +579,7 @@ def generate_reply():
     return jsonify({'reply': reply})
 
 @app.route('/api/save-reply', methods=['POST'])
+@csrf_exempt          # <-- ДОБАВЛЕНО
 @login_required
 def save_reply():
     data = request.get_json() or {}
@@ -601,6 +605,7 @@ def save_reply():
         return jsonify({'error': 'Ошибка сервера'}), 500
 
 @app.route('/api/auto-reply-settings', methods=['POST'])
+@csrf_exempt          # <-- ДОБАВЛЕНО
 @login_required
 def update_auto_reply_settings():
     data = request.get_json() or {}
@@ -609,6 +614,7 @@ def update_auto_reply_settings():
     return jsonify({'success': True})
 
 @app.route('/api/notification-settings', methods=['POST'])
+@csrf_exempt          # <-- ДОБАВЛЕНО
 @login_required
 def update_notification_settings():
     data = request.get_json() or {}
@@ -695,6 +701,7 @@ def delete_api_key(key_id):
 
 # ==================== OZON API ЭНДПОИНТЫ ====================
 @app.route('/api/ozon/feedbacks')
+@csrf_exempt          # <-- ДОБАВЛЕНО
 @login_required
 def get_ozon_feedbacks_api():
     api_key_obj = ApiKey.query.filter_by(user_id=current_user.id, marketplace='ozon').first()
@@ -708,6 +715,7 @@ def get_ozon_feedbacks_api():
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/ozon/answer', methods=['POST'])
+@csrf_exempt          # <-- ДОБАВЛЕНО
 @login_required
 def answer_ozon_feedback():
     data = request.json or {}
@@ -725,6 +733,7 @@ def answer_ozon_feedback():
 
 # ==================== YANDEX API ЭНДПОИНТЫ ====================
 @app.route('/api/yandex/feedbacks')
+@csrf_exempt          # <-- ДОБАВЛЕНО
 @login_required
 def get_yandex_feedbacks_api():
     api_key_obj = ApiKey.query.filter_by(user_id=current_user.id, marketplace='yandex').first()
@@ -738,6 +747,7 @@ def get_yandex_feedbacks_api():
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/yandex/answer', methods=['POST'])
+@csrf_exempt          # <-- ДОБАВЛЕНО
 @login_required
 def answer_yandex_feedback():
     data = request.json or {}
@@ -845,6 +855,7 @@ def check_rate_limit(limit_count=3, window_hours=1):
 
 # ==================== ПРЕДЛОЖЕНИЯ И ПОДПИСКА ====================
 @app.route('/api/suggestion', methods=['POST'])
+@csrf_exempt          # <-- ДОБАВЛЕНО
 @login_required
 def add_suggestion():
     """
@@ -881,6 +892,7 @@ def add_suggestion():
         return jsonify({'error': 'Ошибка сервера'}), 500
 
 @app.route('/send-email', methods=['POST'])
+@csrf_exempt          # <-- ДОБАВЛЕНО
 def send_email():
     email = request.form.get('email')
     if not email or '@' not in email:
