@@ -85,10 +85,14 @@
                     Мы собираем обратную связь, чтобы сделать продукт идеальным перед публичным запуском.
                 </p>
 
-                <div class="beta-actions">
-                    <a href="{{ url_for('beta_info') }}" class="beta-link">📖 Подробнее о бета-тесте →</a>
-                    <p align="center"><a href="{{ url_for('register') }}" class="button button--primary">🎯 Зарегистрироваться и получить доступ</a></p>
+                <div class="beta-links">
+                    <p>
+                        📖 <a href="{{ url_for('beta_info') }}">Подробнее о бета-тесте →</a>
+                    </p>
                 </div>
+                    <p align="center">
+                        🎯 <a href="{{ url_for('register') }}" class="button button--primary">Зарегистрироваться и получить доступ</a>
+                    </p>
             </div>
         </div>
     </section>
