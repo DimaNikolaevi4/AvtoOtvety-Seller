@@ -22,6 +22,7 @@ class User(db.Model, UserMixin):
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
 
+
 class LoginHistory(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
@@ -30,6 +31,7 @@ class LoginHistory(db.Model):
     user_agent = db.Column(db.String(200), nullable=True)
 
     user = db.relationship('User', backref=db.backref('login_history', lazy=True, order_by='LoginHistory.login_time.desc()'))
+
 
 class ApiKey(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -42,6 +44,7 @@ class ApiKey(db.Model):
 
     user = db.relationship('User', backref=db.backref('api_keys', lazy=True))
 
+
 class Comment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     article_slug = db.Column(db.String(200), nullable=False)
@@ -49,10 +52,12 @@ class Comment(db.Model):
     text = db.Column(db.Text, nullable=False)
     created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
 
+
 class Subscriber(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(120), unique=True, nullable=False)
     created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
+
 
 class ReplyHistory(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -64,7 +69,7 @@ class ReplyHistory(db.Model):
 
     user = db.relationship('User', backref=db.backref('reply_history', lazy=True, order_by='ReplyHistory.created_at.desc()'))
 
-# Класс Suggestion вынесен на правильный уровень
+
 class Suggestion(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
@@ -73,3 +78,16 @@ class Suggestion(db.Model):
     status = db.Column(db.String(20), default='new')  # Статус: new, reviewed, archived
     
     user = db.relationship('User', backref=db.backref('suggestions', lazy=True))
+
+
+# ==================== МОДЕЛЬ ДЛЯ RATE LIMITING ====================
+class RequestLog(db.Model):
+    """Таблица для логирования запросов для rate limiting (анонимов и авторизованных)"""
+    __tablename__ = 'request_logs'
+    id = db.Column(db.Integer, primary_key=True)
+    identifier = db.Column(db.String(128), nullable=False, index=True)  # user:123 или anon:md5hash
+    endpoint = db.Column(db.String(64), nullable=False)                # 'suggestion', 'send_email'
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def __repr__(self):
+        return f'<RequestLog {self.identifier} {self.endpoint}>'
