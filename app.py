@@ -24,6 +24,34 @@ from utils import sanitize_input
 from models import db, User, LoginHistory, ApiKey, Comment, Subscriber, ReplyHistory, Suggestion
 from config import config_by_name, ProductionConfig
 
+
+def get_review_rating(review, marketplace):
+    """
+    Извлекает рейтинг из отзыва для указанного маркетплейса.
+    Возвращает целое число от 1 до 5 или 0, если рейтинг не определён.
+    """
+    if marketplace == 'wb':
+        # Wildberries: поле productRating (уже приведено к int в wb_api.py)
+        rating = review.get('productRating') or review.get('rating') or 0
+    elif marketplace == 'ozon':
+        # Ozon: поле rating
+        rating = review.get('rating') or 0
+    elif marketplace == 'yandex':
+        # Yandex: поле grade (оценка от 1 до 5)
+        rating = review.get('grade') or review.get('rating') or 0
+    else:
+        return 0
+    
+    # Приводим к int, если это float
+    if isinstance(rating, float):
+        rating = int(rating)
+    
+    # Проверяем, что рейтинг в допустимом диапазоне
+    if rating and 1 <= rating <= 5:
+        return rating
+    return 0
+
+
 # Загрузка переменных окружения из .env
 load_dotenv()
 
@@ -433,7 +461,11 @@ def dashboard():
     has_ozon = any(key.marketplace == 'ozon' for key in api_keys)
     has_yandex = any(key.marketplace == 'yandex' for key in api_keys)
     
-    total_reviews = positive = neutral = negative = 0
+    total_reviews = 0
+    positive = 0
+    neutral = 0
+    negative = 0
+    total_rating_sum = 0
     
     for key in api_keys:
         try:
@@ -441,37 +473,67 @@ def dashboard():
                 feedbacks = get_wb_feedbacks(key.api_key)
                 if feedbacks:
                     feedbacks_by_marketplace['wildberries'].extend(feedbacks)
+                    for fb in feedbacks:
+                        rating = get_review_rating(fb, 'wb')
+                        if rating >= 4:
+                            positive += 1
+                        elif rating == 3:
+                            neutral += 1
+                        elif 1 <= rating <= 2:
+                            negative += 1
+                        else:
+                            # рейтинг не определён – считаем нейтральным
+                            neutral += 1
+                        if rating:
+                            total_rating_sum += rating
                     total_reviews += len(feedbacks)
-                    positive += len(feedbacks) // 2
-                    neutral += len(feedbacks) // 4
-                    negative += len(feedbacks) // 4
-                    
+                        
             elif key.marketplace == 'ozon' and key.ozon_client_id and key.ozon_api_key:
                 ozon = OzonAPI(key.ozon_client_id, key.ozon_api_key)
                 ozon_feedbacks = ozon.get_feedbacks(limit=50)
                 feedbacks_by_marketplace['ozon'].extend(ozon_feedbacks)
+                for fb in ozon_feedbacks:
+                    rating = get_review_rating(fb, 'ozon')
+                    if rating >= 4:
+                        positive += 1
+                    elif rating == 3:
+                        neutral += 1
+                    elif 1 <= rating <= 2:
+                        negative += 1
+                    else:
+                        neutral += 1
+                    if rating:
+                        total_rating_sum += rating
                 total_reviews += len(ozon_feedbacks)
-                positive += len(ozon_feedbacks) // 2
-                neutral += len(ozon_feedbacks) // 4
-                negative += len(ozon_feedbacks) // 4
                 
             elif key.marketplace == 'yandex' and key.api_key:
                 yandex = YandexAPI(key.api_key)
                 yandex_feedbacks = yandex.get_feedbacks(limit=50)
                 feedbacks_by_marketplace['yandex'].extend(yandex_feedbacks)
+                for fb in yandex_feedbacks:
+                    rating = get_review_rating(fb, 'yandex')
+                    if rating >= 4:
+                        positive += 1
+                    elif rating == 3:
+                        neutral += 1
+                    elif 1 <= rating <= 2:
+                        negative += 1
+                    else:
+                        neutral += 1
+                    if rating:
+                        total_rating_sum += rating
                 total_reviews += len(yandex_feedbacks)
-                positive += len(yandex_feedbacks) // 2
-                neutral += len(yandex_feedbacks) // 4
-                negative += len(yandex_feedbacks) // 4
                 
         except Exception as e:
             app.logger.error(f"Ошибка получения отзывов ({key.marketplace}): {e}")
             flash(f'Ошибка при получении отзывов {key.marketplace}', 'danger')
     
+    # Вычисляем средний рейтинг
     if total_reviews > 0:
+        avg_rating = round(total_rating_sum / total_reviews, 1)
         stats = {
             'total_reviews': total_reviews,
-            'avg_rating': 4.7,
+            'avg_rating': avg_rating,
             'requests_today': 28,
             'active_platforms': sum([has_wb, has_ozon, has_yandex])
         }
