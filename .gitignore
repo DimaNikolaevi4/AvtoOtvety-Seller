@@ -1,44 +1,53 @@
 ```
 # Executable/binary files
-AvtoOtvety-Seller
-
-# Environment variables
-.env
-.env.local
-*.env.*
+*.exe
+*.dll
+*.so
+*.o
+*.obj
+*.out
+*.class
+*.pyc
+__pycache__/
 
 # Dependencies
 node_modules/
-.venv/
 venv/
-__pycache__/
-.mypy_cache/
-.pytest_cache/
+.venv/
+.env
+.env.local
+*.env.*
 
 # Build/dist directories
 dist/
 build/
 target/
+.gradle/
 
 # IDE/editor files
 .vscode/
 .idea/
 *.swp
 *.swo
-
-# Logs and temporary files
-*.log
 *.tmp
-*.out
 
-# OS files
+# System files
 .DS_Store
 Thumbs.db
 
-# Coverage reports
+# Logs
+*.log
+
+# Coverage
 coverage/
 htmlcov/
 .coverage
+
+# Python specific
+*.pyc
+__pycache__/
+.mypy_cache/
+.pytest_cache/
 
 # Compressed files
 *.zip
@@ -59,7 +68,8 @@ htmlcov/
 *.Z
 *.lz
 *.lzo
-
-# Instance folder (Flask app data)
-instance/
+*.tar.gz
+*.tar.bz2
+*.tar.xz
+*.tar.zst
 ```
