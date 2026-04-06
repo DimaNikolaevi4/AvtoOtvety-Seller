@@ -1,1 +1,41 @@
-Nothing should be ignored since only HTML template files were modified and no build artifacts, dependencies, or temporary files are present in the changes.
+# --- Конфигурация и секреты (локальные настройки хостинга) ---
+.env
+.htaccess
+passenger_wsgi.py
+
+# --- Виртуальное окружение Python ---
+venv/
+ENV/
+env/
+
+# --- Кэш Python и байт-код ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# --- Логи и временные файлы ---
+logs/
+tmp/
+restart.txt
+instance/
+
+# --- База данных (если локальная SQLite, но у вас MySQL, на всякий случай) ---
+*.db
+*.sqlite
+*.sqlite3
+
+# --- Файлы IDE и редакторов ---
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# --- Системные файлы ---
+.DS_Store
+Thumbs.db
+
+# --- Статические файлы, генерируемые вручную или загружаемые пользователями ---
+static/avatars/
+uploads/
