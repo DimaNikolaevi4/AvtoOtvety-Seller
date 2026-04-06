@@ -21,7 +21,7 @@ from utils.wb_api import get_wb_feedbacks
 from utils.ozon_api import OzonAPI
 from utils.yandex_api import YandexAPI
 from utils import sanitize_input
-from models import db, User, LoginHistory, ApiKey, Comment, Subscriber, ReplyHistory, Suggestion
+from models import db, User, LoginHistory, ApiKey, Comment, Subscriber, ReplyHistory, Suggestion, RequestLog
 from config import config_by_name, ProductionConfig
 
 
@@ -86,18 +86,6 @@ app.logger.info(f"🔧 Конфигурация: {config_name}")
 @app.context_processor
 def inject_csrf_token():
     return dict(csrf_token=lambda: generate_csrf())
-
-# ==================== МОДЕЛЬ ДЛЯ ЛОГИРОВАНИЯ ЗАПРОСОВ (RATE LIMITING) ====================
-class RequestLog(db.Model):
-    """Таблица для логирования запросов для rate limiting (анонимов и авторизованных)"""
-    __tablename__ = 'request_logs'
-    id = db.Column(db.Integer, primary_key=True)
-    identifier = db.Column(db.String(128), nullable=False, index=True)  # user:123 или anon:md5hash
-    endpoint = db.Column(db.String(64), nullable=False)                # 'suggestion', 'send_email'
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-
-    def __repr__(self):
-        return f'<RequestLog {self.identifier} {self.endpoint} {self.created_at}>'
 
 # ==================== НАСТРОЙКА ЛОГИРОВАНИЯ ====================
 if not app.debug:
@@ -581,7 +569,6 @@ def check_rate_limit(limit_count=3, window_hours=1, endpoint='suggestion'):
     identifier = get_user_identifier()
     cutoff = datetime.utcnow() - timedelta(hours=window_hours)
 
-    # Считаем количество запросов от этого идентификатора для данного эндпоинта за период
     count = RequestLog.query.filter(
         RequestLog.identifier == identifier,
         RequestLog.endpoint == endpoint,
@@ -592,7 +579,6 @@ def check_rate_limit(limit_count=3, window_hours=1, endpoint='suggestion'):
         app.logger.warning(f"Rate limit hit: {identifier} on {endpoint}, count={count}, limit={limit_count}")
         return False, f"Превышен лимит запросов. Пожалуйста, подождите {window_hours} час(а)."
 
-    # Логируем текущий запрос
     try:
         log = RequestLog(identifier=identifier, endpoint=endpoint)
         db.session.add(log)
@@ -600,7 +586,6 @@ def check_rate_limit(limit_count=3, window_hours=1, endpoint='suggestion'):
     except Exception as e:
         app.logger.error(f"Failed to log request for rate limiting: {e}")
         db.session.rollback()
-        # Даже если лог не сохранился, не блокируем запрос
     return True, None
 
 def check_referer():
@@ -840,10 +825,6 @@ def answer_yandex_feedback():
 @csrf.exempt
 @login_required
 def add_suggestion():
-    """
-    Обработка предложения от пользователя с rate limiting (3 в час).
-    """
-    # Проверка лимита для эндпоинта 'suggestion'
     allowed, error_msg = check_rate_limit(limit_count=3, window_hours=1, endpoint='suggestion')
     if not allowed:
         return jsonify({'error': error_msg}), 429
@@ -873,10 +854,6 @@ def add_suggestion():
 @app.route('/send-email', methods=['POST'])
 @csrf.exempt
 def send_email():
-    """
-    Подписка на новости с rate limiting (5 в час для одного идентификатора).
-    """
-    # Проверка лимита для эндпоинта 'send_email'
     allowed, error_msg = check_rate_limit(limit_count=5, window_hours=1, endpoint='send_email')
     if not allowed:
         return jsonify({'success': False, 'error': error_msg}), 429
@@ -896,16 +873,24 @@ def send_email():
         app.logger.error(f"Ошибка подписки: {e}")
         return jsonify({'success': False, 'error': 'Ошибка сервера'}), 500
 
-# ==================== ОТЛАДКА (удалить в продакшене!) ====================
-@app.route('/debug')
-@login_required
-def debug():
-    import traceback
-    try:
-        api_keys = current_user.api_keys
-        return f"User: {current_user.email}, API keys: {len(api_keys)}"
-    except Exception as e:
-        return f"<pre>{traceback.format_exc()}</pre>", 500
+# ==================== ОТЛАДОЧНЫЙ МАРШРУТ (только для DEVELOPMENT) ====================
+if app.debug or os.getenv('FLASK_ENV') == 'development':
+    @app.route('/debug')
+    @login_required
+    def debug():
+        import traceback
+        try:
+            api_keys = current_user.api_keys
+            output = f"User: {current_user.email}, API keys: {len(api_keys)}"
+            # Можно добавить дополнительную отладочную информацию
+            return output
+        except Exception as e:
+            return f"<pre>{traceback.format_exc()}</pre>", 500
+else:
+    # В production маршрут /debug недоступен (404)
+    @app.route('/debug')
+    def debug_not_found():
+        return "Not Found", 404
 
 # ==================== ЗАПУСК ====================
 if __name__ == '__main__':
