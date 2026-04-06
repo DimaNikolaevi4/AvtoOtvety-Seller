@@ -15,7 +15,7 @@ from flask_migrate import Migrate
 from dotenv import load_dotenv
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from flask_wtf import CSRFProtect
-from flask_wtf.csrf import generate_csrf, csrf_exempt   # <-- ДОБАВЛЕН csrf_exempt
+from flask_wtf.csrf import generate_csrf
 from werkzeug.utils import secure_filename
 from utils.wb_api import get_wb_feedbacks
 from utils.ozon_api import OzonAPI
@@ -31,22 +31,17 @@ def get_review_rating(review, marketplace):
     Возвращает целое число от 1 до 5 или 0, если рейтинг не определён.
     """
     if marketplace == 'wb':
-        # Wildberries: поле productRating (уже приведено к int в wb_api.py)
         rating = review.get('productRating') or review.get('rating') or 0
     elif marketplace == 'ozon':
-        # Ozon: поле rating
         rating = review.get('rating') or 0
     elif marketplace == 'yandex':
-        # Yandex: поле grade (оценка от 1 до 5)
         rating = review.get('grade') or review.get('rating') or 0
     else:
         return 0
-    
-    # Приводим к int, если это float
+
     if isinstance(rating, float):
         rating = int(rating)
-    
-    # Проверяем, что рейтинг в допустимом диапазоне
+
     if rating and 1 <= rating <= 5:
         return rating
     return 0
@@ -78,7 +73,6 @@ elif db_uri.startswith('mysql'):
 else:
     db_type = "Unknown"
 
-# Вывод информации о подключении и конфигурации в консоль
 config_name = config_class.__name__.replace('Config', '')
 if not config_name:
     config_name = 'Development'
@@ -93,12 +87,23 @@ app.logger.info(f"🔧 Конфигурация: {config_name}")
 def inject_csrf_token():
     return dict(csrf_token=lambda: generate_csrf())
 
+# ==================== МОДЕЛЬ ДЛЯ ЛОГИРОВАНИЯ ЗАПРОСОВ (RATE LIMITING) ====================
+class RequestLog(db.Model):
+    """Таблица для логирования запросов для rate limiting (анонимов и авторизованных)"""
+    __tablename__ = 'request_logs'
+    id = db.Column(db.Integer, primary_key=True)
+    identifier = db.Column(db.String(128), nullable=False, index=True)  # user:123 или anon:md5hash
+    endpoint = db.Column(db.String(64), nullable=False)                # 'suggestion', 'send_email'
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def __repr__(self):
+        return f'<RequestLog {self.identifier} {self.endpoint} {self.created_at}>'
+
 # ==================== НАСТРОЙКА ЛОГИРОВАНИЯ ====================
 if not app.debug:
-    # Логирование в файл для продакшена (Beget)
     if not os.path.exists('logs'):
         os.mkdir('logs')
-    
+
     from logging.handlers import RotatingFileHandler
     file_handler = RotatingFileHandler('logs/app.log', maxBytes=10240, backupCount=10)
     file_handler.setFormatter(logging.Formatter(
@@ -106,14 +111,13 @@ if not app.debug:
     ))
     file_handler.setLevel(logging.INFO)
     app.logger.addHandler(file_handler)
-    
-    # Также логируем в консоль
+
     handler = logging.StreamHandler(sys.stderr)
     handler.setLevel(logging.INFO)
     formatter = logging.Formatter('[%(asctime)s] %(levelname)s in %(module)s: %(message)s')
     handler.setFormatter(formatter)
     app.logger.addHandler(handler)
-    
+
     app.logger.setLevel(logging.INFO)
     app.logger.info("🚀 Приложение запущено в продакшен-режиме")
     app.logger.info("📝 Логи записываются в logs/app.log")
@@ -162,13 +166,11 @@ with app.app_context():
 # ==================== ОБРАБОТЧИКИ ОШИБОК ====================
 @app.errorhandler(404)
 def not_found_error(error):
-    """Обработчик ошибки 404 — Страница не найдена"""
     app.logger.warning(f"404 Error: {request.url} from IP: {request.remote_addr}")
     return render_template('errors/404.html'), 404
 
 @app.errorhandler(500)
 def internal_error(error):
-    """Обработчик ошибки 500 — Внутренняя ошибка сервера"""
     db.session.rollback()
     app.logger.error(f"500 Error: {error} from IP: {request.remote_addr}")
     return render_template('errors/500.html'), 500
@@ -200,7 +202,6 @@ def knowledge_base():
 
 @app.route('/beta-info')
 def beta_info():
-    """Страница с информацией о бета-тестировании"""
     return render_template('beta-info.html')
 
 # ==================== БЛОГ ====================
@@ -227,14 +228,14 @@ def add_comment(slug):
     name = request.form.get('name', '').strip()
     text = request.form.get('text', '').strip()
     honeypot = request.form.get('_honeypot', '')
-    
+
     if honeypot:
         return redirect(request.referrer or url_for('index'))
-    
+
     if not name or not text:
         flash('Пожалуйста, заполните имя и комментарий.', 'error')
         return redirect(request.referrer or url_for('index'))
-    
+
     try:
         comment = Comment(article_slug=slug, author_name=name, text=text)
         db.session.add(comment)
@@ -245,35 +246,33 @@ def add_comment(slug):
         app.logger.error(f"Ошибка при добавлении комментария: {e}")
         flash('Произошла ошибка. Попробуйте позже.', 'error')
         db.session.rollback()
-    
+
     return redirect(request.referrer or url_for('index'))
 
 # ==================== АВТОРИЗАЦИЯ ====================
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
-        # CSRF-защита обрабатывается автоматически через flask-wtf
-        
         email = request.form.get('email')
         password = request.form.get('password')
         confirm = request.form.get('confirm_password')
-        
+
         if not email or not password or not confirm:
             flash('Все поля обязательны', 'danger')
             return redirect(url_for('register'))
-        
+
         if len(password) < 6:
             flash('Пароль должен содержать минимум 6 символов', 'danger')
             return redirect(url_for('register'))
-        
+
         if password != confirm:
             flash('Пароли не совпадают', 'danger')
             return redirect(url_for('register'))
-        
+
         if User.query.filter_by(email=email).first():
             flash('Пользователь с таким email уже существует', 'danger')
             return redirect(url_for('register'))
-        
+
         try:
             user = User(email=email, name=email.split('@')[0])
             user.set_password(password)
@@ -287,23 +286,21 @@ def register():
             db.session.rollback()
             flash('Произошла ошибка при регистрации', 'danger')
             return redirect(url_for('register'))
-    
+
     return render_template('register.html')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        # CSRF-защита обрабатывается автоматически через flask-wtf
-        
         email = request.form.get('email')
         password = request.form.get('password')
-        
+
         if not email or not password:
             flash('Введите email и пароль', 'danger')
             return redirect(url_for('login'))
-        
+
         user = User.query.filter_by(email=email).first()
-        
+
         if user and user.check_password(password):
             login_user(user)
             app.logger.info(f"✅ Вход выполнен: {email}")
@@ -312,7 +309,7 @@ def login():
             app.logger.warning(f"⚠️ Неудачная попытка входа: {email}")
             flash('Неверный email или пароль', 'danger')
             return redirect(url_for('login'))
-    
+
     return render_template('login.html')
 
 @app.route('/logout')
@@ -327,12 +324,12 @@ def logout():
 def profile():
     if request.method == 'POST':
         action = request.form.get('action')
-        
+
         try:
             if action == 'update_profile':
                 new_name = request.form.get('name', '').strip()
                 new_email = request.form.get('email', '').strip()
-                
+
                 if new_email and '@' in new_email:
                     existing = User.query.filter(User.email == new_email, User.id != current_user.id).first()
                     if existing:
@@ -342,18 +339,18 @@ def profile():
                         flash('Email успешно изменён', 'success')
                 else:
                     flash('Некорректный email', 'danger')
-                
+
                 if new_name:
                     current_user.name = new_name
                     flash('Имя успешно изменено', 'success')
-                
+
                 db.session.commit()
-            
+
             elif action == 'change_password':
                 old_password = request.form.get('old_password')
                 new_password = request.form.get('new_password')
                 confirm = request.form.get('confirm_password')
-                
+
                 if not current_user.check_password(old_password):
                     flash('Неверный текущий пароль', 'danger')
                 elif new_password != confirm:
@@ -364,26 +361,26 @@ def profile():
                     current_user.set_password(new_password)
                     db.session.commit()
                     flash('Пароль успешно изменён', 'success')
-            
+
             elif action == 'update_notifications':
                 current_user.email_notifications = 'email_notifications' in request.form
                 current_user.push_notifications = 'push_notifications' in request.form
                 db.session.commit()
                 flash('Настройки уведомлений обновлены', 'success')
-            
+
             elif action == 'update_auto_reply':
                 current_user.auto_reply_enabled = 'auto_reply_enabled' in request.form
                 db.session.commit()
                 flash('Настройки автоответа обновлены', 'success')
-            
+
             return redirect(url_for('profile'))
-            
+
         except Exception as e:
             app.logger.error(f"Ошибка при обновлении профиля: {e}")
             flash('Произошла ошибка. Попробуйте позже.', 'danger')
             db.session.rollback()
             return redirect(url_for('profile'))
-    
+
     login_history = LoginHistory.query.filter_by(user_id=current_user.id).limit(5).all()
     return render_template('profile.html', user=current_user, login_history=login_history)
 
@@ -393,23 +390,23 @@ def upload_avatar():
     if 'avatar' not in request.files:
         flash('Файл не выбран', 'danger')
         return redirect(url_for('profile'))
-    
+
     file = request.files['avatar']
     if file.filename == '':
         flash('Файл не выбран', 'danger')
         return redirect(url_for('profile'))
-    
+
     try:
         if file and allowed_file(file.filename):
             filename = secure_filename(f"{current_user.id}_{file.filename}")
             filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             file.save(filepath)
-            
+
             if current_user.avatar:
                 old_path = os.path.join(app.config['UPLOAD_FOLDER'], current_user.avatar)
                 if os.path.exists(old_path):
                     os.remove(old_path)
-            
+
             current_user.avatar = filename
             db.session.commit()
             app.logger.info(f"🖼️ Аватар загружен для пользователя {current_user.id}")
@@ -420,7 +417,7 @@ def upload_avatar():
         app.logger.error(f"Ошибка загрузки аватара: {e}")
         flash('Ошибка при загрузке файла', 'danger')
         db.session.rollback()
-    
+
     return redirect(url_for('profile'))
 
 @app.route('/delete-account', methods=['POST'])
@@ -431,23 +428,23 @@ def delete_account():
         ApiKey.query.filter_by(user_id=current_user.id).delete()
         ReplyHistory.query.filter_by(user_id=current_user.id).delete()
         LoginHistory.query.filter_by(user_id=current_user.id).delete()
-        
+
         if current_user.avatar:
             avatar_path = os.path.join(app.config['UPLOAD_FOLDER'], current_user.avatar)
             if os.path.exists(avatar_path):
                 os.remove(avatar_path)
-        
+
         db.session.delete(current_user)
         db.session.commit()
         app.logger.info(f"🗑️ Аккаунт удалён: {email}")
-        
+
         logout_user()
         flash('Ваш аккаунт успешно удалён', 'success')
     except Exception as e:
         app.logger.error(f"Ошибка при удалении аккаунта: {e}")
         flash('Произошла ошибка при удалении', 'danger')
         db.session.rollback()
-    
+
     return redirect(url_for('index'))
 
 # ==================== ДАШБОРД ====================
@@ -456,17 +453,17 @@ def delete_account():
 def dashboard():
     api_keys = current_user.api_keys
     feedbacks_by_marketplace = {'wildberries': [], 'ozon': [], 'yandex': []}
-    
+
     has_wb = any(key.marketplace == 'wb' for key in api_keys)
     has_ozon = any(key.marketplace == 'ozon' for key in api_keys)
     has_yandex = any(key.marketplace == 'yandex' for key in api_keys)
-    
+
     total_reviews = 0
     positive = 0
     neutral = 0
     negative = 0
     total_rating_sum = 0
-    
+
     for key in api_keys:
         try:
             if key.marketplace == 'wb':
@@ -482,12 +479,11 @@ def dashboard():
                         elif 1 <= rating <= 2:
                             negative += 1
                         else:
-                            # рейтинг не определён – считаем нейтральным
                             neutral += 1
                         if rating:
                             total_rating_sum += rating
                     total_reviews += len(feedbacks)
-                        
+
             elif key.marketplace == 'ozon' and key.ozon_client_id and key.ozon_api_key:
                 ozon = OzonAPI(key.ozon_client_id, key.ozon_api_key)
                 ozon_feedbacks = ozon.get_feedbacks(limit=50)
@@ -505,7 +501,7 @@ def dashboard():
                     if rating:
                         total_rating_sum += rating
                 total_reviews += len(ozon_feedbacks)
-                
+
             elif key.marketplace == 'yandex' and key.api_key:
                 yandex = YandexAPI(key.api_key)
                 yandex_feedbacks = yandex.get_feedbacks(limit=50)
@@ -523,12 +519,11 @@ def dashboard():
                     if rating:
                         total_rating_sum += rating
                 total_reviews += len(yandex_feedbacks)
-                
+
         except Exception as e:
             app.logger.error(f"Ошибка получения отзывов ({key.marketplace}): {e}")
             flash(f'Ошибка при получении отзывов {key.marketplace}', 'danger')
-    
-    # Вычисляем средний рейтинг
+
     if total_reviews > 0:
         avg_rating = round(total_rating_sum / total_reviews, 1)
         stats = {
@@ -540,11 +535,11 @@ def dashboard():
     else:
         stats = {'total_reviews': 0, 'avg_rating': 0, 'requests_today': 0, 'active_platforms': 0}
         positive = neutral = negative = 0
-    
+
     review_summary = {'positive': positive, 'neutral': neutral, 'negative': negative}
     chart_data = {'labels': [], 'values': []}
     reply_history = ReplyHistory.query.filter_by(user_id=current_user.id).limit(5).all()
-    
+
     return render_template('dashboard.html',
                            api_keys=api_keys,
                            feedbacks=feedbacks_by_marketplace,
@@ -557,20 +552,97 @@ def dashboard():
 @app.route('/history')
 @login_required
 def history():
-    """Страница истории всех ответов пользователя"""
     reply_history = ReplyHistory.query.filter_by(user_id=current_user.id).order_by(ReplyHistory.created_at.desc()).all()
     return render_template('history.html', history=reply_history)
 
+# ==================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ БЕЗОПАСНОСТИ ====================
+
+def get_user_identifier():
+    """
+    Возвращает идентификатор пользователя для проверки лимитов.
+    Если авторизован -> user:ID.
+    Если аноним -> anon:md5(IP + User-Agent).
+    """
+    if current_user.is_authenticated:
+        return f"user:{current_user.id}"
+
+    ip = request.remote_addr or '127.0.0.1'
+    ua = request.headers.get('User-Agent', 'unknown')
+    raw_id = f"{ip}:{ua}"
+    hashed_id = hashlib.md5(raw_id.encode('utf-8')).hexdigest()
+    return f"anon:{hashed_id}"
+
+def check_rate_limit(limit_count=3, window_hours=1, endpoint='suggestion'):
+    """
+    Проверяет лимит запросов для текущего пользователя (авторизованного или анонима).
+    Возвращает (True, None) если лимит не превышен, или (False, error_message) если превышен.
+    Логирует запрос в таблицу RequestLog.
+    """
+    identifier = get_user_identifier()
+    cutoff = datetime.utcnow() - timedelta(hours=window_hours)
+
+    # Считаем количество запросов от этого идентификатора для данного эндпоинта за период
+    count = RequestLog.query.filter(
+        RequestLog.identifier == identifier,
+        RequestLog.endpoint == endpoint,
+        RequestLog.created_at >= cutoff
+    ).count()
+
+    if count >= limit_count:
+        app.logger.warning(f"Rate limit hit: {identifier} on {endpoint}, count={count}, limit={limit_count}")
+        return False, f"Превышен лимит запросов. Пожалуйста, подождите {window_hours} час(а)."
+
+    # Логируем текущий запрос
+    try:
+        log = RequestLog(identifier=identifier, endpoint=endpoint)
+        db.session.add(log)
+        db.session.commit()
+    except Exception as e:
+        app.logger.error(f"Failed to log request for rate limiting: {e}")
+        db.session.rollback()
+        # Даже если лог не сохранился, не блокируем запрос
+    return True, None
+
+def check_referer():
+    """
+    Ослабленная проверка Referer для совместимости с хостингом BeGet.
+    Возвращает True, если Referer отсутствует или совпадает с доменом.
+    """
+    referrer = request.headers.get('Referer', '')
+    if not referrer:
+        return True
+
+    parsed_ref = urlparse(referrer).netloc.lower()
+    host = urlparse(request.url).netloc.lower()
+
+    if parsed_ref == host:
+        return True
+
+    ref_parts = parsed_ref.replace('www.', '').split('.')
+    host_parts = host.replace('www.', '').split('.')
+
+    if len(ref_parts) >= 2 and len(host_parts) >= 2:
+        ref_domain = '.'.join(ref_parts[-2:])
+        host_domain = '.'.join(host_parts[-2:])
+        if ref_domain == host_domain:
+            return True
+
+    app.logger.warning(
+        f"CSRF warning: Referer={referrer}, Host={host}, IP={request.remote_addr}. "
+        f"Запрос разрешён в режиме бета-тестирования."
+    )
+    return True
+
 # ==================== API ЭНДПОИНТЫ ====================
 @app.route('/api/chart-data')
-@csrf_exempt          # <-- ДОБАВЛЕНО
+@csrf.exempt
 @login_required
 def chart_data_api():
     period = request.args.get('period', default='7', type=int)
     return jsonify({'labels': [], 'values': []})
 
 @app.route('/api/generate-reply', methods=['POST'])
-@csrf_exempt          # <-- ДОБАВЛЕНО
+@csrf.exempt
 @login_required
 def generate_reply():
     data = request.get_json() or {}
@@ -579,17 +651,17 @@ def generate_reply():
     return jsonify({'reply': reply})
 
 @app.route('/api/save-reply', methods=['POST'])
-@csrf_exempt          # <-- ДОБАВЛЕНО
+@csrf.exempt
 @login_required
 def save_reply():
     data = request.get_json() or {}
     marketplace = data.get('marketplace')
     review_text = data.get('review_text')
     reply_text = data.get('reply_text')
-    
+
     if not all([marketplace, review_text, reply_text]):
         return jsonify({'error': 'Недостаточно данных'}), 400
-    
+
     try:
         reply_entry = ReplyHistory(
             user_id=current_user.id,
@@ -605,7 +677,7 @@ def save_reply():
         return jsonify({'error': 'Ошибка сервера'}), 500
 
 @app.route('/api/auto-reply-settings', methods=['POST'])
-@csrf_exempt          # <-- ДОБАВЛЕНО
+@csrf.exempt
 @login_required
 def update_auto_reply_settings():
     data = request.get_json() or {}
@@ -614,7 +686,7 @@ def update_auto_reply_settings():
     return jsonify({'success': True})
 
 @app.route('/api/notification-settings', methods=['POST'])
-@csrf_exempt          # <-- ДОБАВЛЕНО
+@csrf.exempt
 @login_required
 def update_notification_settings():
     data = request.get_json() or {}
@@ -628,15 +700,15 @@ def update_notification_settings():
 def add_api_key():
     marketplace = request.form.get('marketplace')
     api_key = request.form.get('api_key')
-    
+
     if not marketplace or not api_key:
         flash('Заполните все поля', 'error')
         return redirect(url_for('dashboard'))
-    
+
     if marketplace == 'ozon':
         flash('Для Ozon используйте отдельную форму добавления ключей', 'warning')
         return redirect(url_for('dashboard'))
-    
+
     try:
         new_key = ApiKey(user_id=current_user.id, marketplace=marketplace, api_key=api_key)
         db.session.add(new_key)
@@ -647,7 +719,7 @@ def add_api_key():
         app.logger.error(f"Ошибка добавления ключа: {e}")
         flash('Ошибка при сохранении ключа', 'error')
         db.session.rollback()
-    
+
     return redirect(url_for('dashboard'))
 
 @app.route('/add-ozon-keys', methods=['POST'])
@@ -655,18 +727,18 @@ def add_api_key():
 def add_ozon_keys():
     client_id = request.form.get('ozon_client_id')
     api_key = request.form.get('ozon_api_key')
-    
+
     if not client_id or not api_key:
         flash('Заполните оба поля для Ozon', 'error')
         return redirect(url_for('dashboard'))
-    
+
     try:
         existing = ApiKey.query.filter_by(user_id=current_user.id, marketplace='ozon').first()
         if existing:
             existing.ozon_client_id = client_id
             existing.ozon_api_key = api_key
         else:
-            new_key = ApiKey(user_id=current_user.id, marketplace='ozon', 
+            new_key = ApiKey(user_id=current_user.id, marketplace='ozon',
                            api_key='', ozon_client_id=client_id, ozon_api_key=api_key)
             db.session.add(new_key)
         db.session.commit()
@@ -676,7 +748,7 @@ def add_ozon_keys():
         app.logger.error(f"Ошибка добавления ключей Ozon: {e}")
         flash('Ошибка при сохранении ключей', 'error')
         db.session.rollback()
-    
+
     return redirect(url_for('dashboard'))
 
 @app.route('/delete-api-key/<int:key_id>', methods=['POST'])
@@ -686,7 +758,7 @@ def delete_api_key(key_id):
     if key.user_id != current_user.id:
         flash('У вас нет прав на удаление этого ключа', 'error')
         return redirect(url_for('dashboard'))
-    
+
     try:
         db.session.delete(key)
         db.session.commit()
@@ -696,12 +768,12 @@ def delete_api_key(key_id):
         app.logger.error(f"Ошибка удаления ключа: {e}")
         flash('Ошибка при удалении', 'error')
         db.session.rollback()
-    
+
     return redirect(url_for('dashboard'))
 
 # ==================== OZON API ЭНДПОИНТЫ ====================
 @app.route('/api/ozon/feedbacks')
-@csrf_exempt          # <-- ДОБАВЛЕНО
+@csrf.exempt
 @login_required
 def get_ozon_feedbacks_api():
     api_key_obj = ApiKey.query.filter_by(user_id=current_user.id, marketplace='ozon').first()
@@ -715,7 +787,7 @@ def get_ozon_feedbacks_api():
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/ozon/answer', methods=['POST'])
-@csrf_exempt          # <-- ДОБАВЛЕНО
+@csrf.exempt
 @login_required
 def answer_ozon_feedback():
     data = request.json or {}
@@ -733,7 +805,7 @@ def answer_ozon_feedback():
 
 # ==================== YANDEX API ЭНДПОИНТЫ ====================
 @app.route('/api/yandex/feedbacks')
-@csrf_exempt          # <-- ДОБАВЛЕНО
+@csrf.exempt
 @login_required
 def get_yandex_feedbacks_api():
     api_key_obj = ApiKey.query.filter_by(user_id=current_user.id, marketplace='yandex').first()
@@ -747,7 +819,7 @@ def get_yandex_feedbacks_api():
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/yandex/answer', methods=['POST'])
-@csrf_exempt          # <-- ДОБАВЛЕНО
+@csrf.exempt
 @login_required
 def answer_yandex_feedback():
     data = request.json or {}
@@ -763,123 +835,30 @@ def answer_yandex_feedback():
         app.logger.error(f"Yandex answer error: {e}")
         return jsonify({'error': str(e)}), 500
 
-# ==================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ БЕЗОПАСНОСТИ ====================
-
-def check_referer():
-    """
-    Ослабленная проверка Referer для совместимости с хостингом BeGet.
-    
-    Возвращает True, если:
-    - Referer отсутствует (разрешаем, т.к. некоторые браузеры/прокси не передают его)
-    - Referer содержит тот же домен (нечеткое сравнение)
-    
-    Возвращает False только если Referer есть и явно указывает на чужой домен.
-    
-    ⚠️ Это временная защита для беты. Перед продакшеном рекомендуется 
-    внедрить полноценную CSRF-защиту через flask-wtf с токенами.
-    """
-    referrer = request.headers.get('Referer', '')
-    
-    # Если Referer отсутствует — разрешаем (многие браузеры/прокси не передают его)
-    if not referrer:
-        return True
-    
-    parsed_ref = urlparse(referrer).netloc.lower()
-    host = urlparse(request.url).netloc.lower()
-    
-    # Если хосты совпадают — всё ок
-    if parsed_ref == host:
-        return True
-    
-    # Дополнительная проверка: возможно, один из хостов содержит www, а другой нет
-    # Или это поддомены одного домена
-    ref_parts = parsed_ref.replace('www.', '').split('.')
-    host_parts = host.replace('www.', '').split('.')
-    
-    # Сравниваем последние 2 части домена (например, example.com)
-    if len(ref_parts) >= 2 and len(host_parts) >= 2:
-        ref_domain = '.'.join(ref_parts[-2:])
-        host_domain = '.'.join(host_parts[-2:])
-        if ref_domain == host_domain:
-            return True
-    
-    # Если домены разные — логируем предупреждение, но НЕ блокируем запрос
-    # (для беты позволяем работать, только логируем подозрительные случаи)
-    app.logger.warning(
-        f"CSRF warning: Referer={referrer}, Host={host}, IP={request.remote_addr}. "
-        f"Запрос разрешён в режиме бета-тестирования."
-    )
-    return True  # Разрешаем запрос в бете
-
-
-def get_user_identifier():
-    """
-    Возвращает идентификатор пользователя для проверки лимитов.
-    Если авторизован -> user_id.
-    Если аноним -> хеш(IP + User-Agent).
-    """
-    if current_user.is_authenticated:
-        return f"user:{current_user.id}"
-    
-    ip = request.remote_addr or '127.0.0.1'
-    ua = request.headers.get('User-Agent', 'unknown')
-    raw_id = f"{ip}:{ua}"
-    hashed_id = hashlib.md5(raw_id.encode('utf-8')).hexdigest()
-    return f"anon:{hashed_id}"
-
-
-def check_rate_limit(limit_count=3, window_hours=1):
-    """
-    Проверяет лимит отправки предложений.
-    Возвращает (True, None) если все ок, или (False, error_message) если лимит превышен.
-    """
-    identifier = get_user_identifier()
-    one_hour_ago = datetime.utcnow() - timedelta(hours=window_hours)
-    
-    if identifier.startswith('user:'):
-        user_id = int(identifier.split(':')[1])
-        count = Suggestion.query.filter(
-            Suggestion.user_id == user_id,
-            Suggestion.created_at >= one_hour_ago
-        ).count()
-        
-        if count >= limit_count:
-            app.logger.warning(f"Rate limit hit: user_id={user_id}, count={count}, IP={request.remote_addr}")
-            return False, "Вы отправили слишком много предложений. Пожалуйста, подождите час перед следующей отправкой."
-    else:
-        # Для анонимных пользователей пока не ограничиваем (нет поля IP в БД)
-        app.logger.info(f"Rate limit skip for anonymous user {identifier[:10]}... (нет связи с БД)")
-    
-    return True, None
-
-
 # ==================== ПРЕДЛОЖЕНИЯ И ПОДПИСКА ====================
 @app.route('/api/suggestion', methods=['POST'])
-@csrf_exempt          # <-- ДОБАВЛЕНО
+@csrf.exempt
 @login_required
 def add_suggestion():
     """
-    Обработка предложения от пользователя.
-    Проверки: Referer, санитизация ввода, лимит 3 предложения в час.
+    Обработка предложения от пользователя с rate limiting (3 в час).
     """
-    # Проверка Referer (CSRF-заглушка)
+    # Проверка лимита для эндпоинта 'suggestion'
+    allowed, error_msg = check_rate_limit(limit_count=3, window_hours=1, endpoint='suggestion')
+    if not allowed:
+        return jsonify({'error': error_msg}), 429
+
     if not check_referer():
         return jsonify({'error': 'Запрос отклонён по соображениям безопасности. Попробуйте обновить страницу.'}), 403
-    
+
     data = request.get_json() or {}
     raw_text = data.get('text', '')
-    
-    # Санитизация ввода (защита от XSS)
+
     clean_text = sanitize_input(raw_text)
     if not clean_text:
         app.logger.info(f"Invalid input from user_id={current_user.id}: {raw_text[:50]}...")
         return jsonify({'error': 'Пожалуйста, введите корректный текст предложения (без HTML-тегов, 1-2000 символов).'}), 400
-    
-    # Проверка лимита отправки
-    allowed, error_msg = check_rate_limit(limit_count=3, window_hours=1)
-    if not allowed:
-        return jsonify({'error': error_msg}), 429
-    
+
     try:
         suggestion = Suggestion(user_id=current_user.id, text=clean_text, status='new')
         db.session.add(suggestion)
@@ -892,8 +871,16 @@ def add_suggestion():
         return jsonify({'error': 'Ошибка сервера'}), 500
 
 @app.route('/send-email', methods=['POST'])
-@csrf_exempt          # <-- ДОБАВЛЕНО
+@csrf.exempt
 def send_email():
+    """
+    Подписка на новости с rate limiting (5 в час для одного идентификатора).
+    """
+    # Проверка лимита для эндпоинта 'send_email'
+    allowed, error_msg = check_rate_limit(limit_count=5, window_hours=1, endpoint='send_email')
+    if not allowed:
+        return jsonify({'success': False, 'error': error_msg}), 429
+
     email = request.form.get('email')
     if not email or '@' not in email:
         return jsonify({'success': False, 'error': 'Некорректный email'}), 400
@@ -925,12 +912,10 @@ if __name__ == '__main__':
     app.run(debug=True, host='127.0.0.1', port=5000)
 
 # ==================== АДМИН-ПАНЕЛЬ ====================
-# Декоратор для проверки доступа к админке (простая защита по паролю из .env)
 def admin_required(f):
-    """Декоратор для защиты админ-маршрутов. Проверяет сессию admin_authenticated."""
     from functools import wraps
     from flask import session
-    
+
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if not session.get('admin_authenticated'):
@@ -940,18 +925,16 @@ def admin_required(f):
 
 @app.route('/admin/login', methods=['GET', 'POST'])
 def admin_login():
-    """Страница входа в админку. Проверка пароля из ADMIN_PASSWORD."""
     from flask import session
-    
+
     if request.method == 'POST':
-        # Проверка Referer (CSRF-заглушка для беты)
         if not check_referer():
             flash('Запрос отклонён по соображениям безопасности. Попробуйте обновить страницу.', 'danger')
             return redirect(url_for('admin_login'))
-        
+
         password = request.form.get('password', '')
         admin_password = app.config.get('ADMIN_PASSWORD', '') or ProductionConfig.ADMIN_PASSWORD
-        
+
         if password == admin_password and admin_password:
             session['admin_authenticated'] = True
             session['admin_email'] = 'admin'
@@ -961,12 +944,11 @@ def admin_login():
             app.logger.warning(f"⚠️ Неверный пароль админки, IP={request.remote_addr}")
             flash('Неверный пароль', 'danger')
             return redirect(url_for('admin_login'))
-    
+
     return render_template('admin/login.html')
 
 @app.route('/admin/logout')
 def admin_logout():
-    """Выход из админки."""
     from flask import session
     session.pop('admin_authenticated', None)
     session.pop('admin_email', None)
@@ -976,45 +958,37 @@ def admin_logout():
 @app.route('/admin/suggestions')
 @admin_required
 def admin_suggestions():
-    """Админ-панель: просмотр всех предложений пользователей с пагинацией."""
     from flask import session
-    
+
     page = request.args.get('page', 1, type=int)
     per_page = 50
-    
-    # Получаем предложения с пагинацией, сортировка по дате (новые сверху)
+
     suggestions_pagination = Suggestion.query.order_by(Suggestion.created_at.desc()).paginate(
         page=page, per_page=per_page, error_out=False
     )
-    
+
     app.logger.info(f"📋 Админ просмотрел предложения: страница {page}")
-    
-    return render_template('admin/suggestions.html', 
+
+    return render_template('admin/suggestions.html',
                          pagination=suggestions_pagination,
                          suggestions=suggestions_pagination.items)
 
 @app.route('/admin/suggestions/export')
 @admin_required
 def export_suggestions_csv():
-    """Экспорт предложений в CSV файл (UTF-8 с BOM для Excel)."""
     from flask import session, make_response
     import csv
     import io
     from datetime import datetime
-    
-    # Получаем все предложения
+
     all_suggestions = Suggestion.query.order_by(Suggestion.created_at.desc()).all()
-    
-    # Создаём CSV в памяти
+
     output = io.StringIO()
-    # Добавляем BOM для корректного отображения в Excel на Windows
     output.write('\ufeff')
-    
+
     writer = csv.writer(output)
-    # Заголовок CSV
     writer.writerow(['id', 'created_at', 'user_email', 'suggestion_text', 'status'])
-    
-    # Данные
+
     for suggestion in all_suggestions:
         user_email = suggestion.user.email if suggestion.user else 'unknown'
         writer.writerow([
@@ -1022,18 +996,15 @@ def export_suggestions_csv():
             suggestion.created_at.strftime('%Y-%m-%d %H:%M:%S'),
             user_email,
             suggestion.text,
-            'new'  # Статус (можно расширить в будущем)
+            'new'
         ])
-    
-    # Генерируем имя файла с текущей датой
+
     filename = f"suggestions_{datetime.now().strftime('%Y%m%d')}.csv"
-    
-    # Создаём HTTP ответ
     response = make_response(output.getvalue())
     response.headers['Content-Disposition'] = f'attachment; filename={filename}'
     response.headers['Content-Type'] = 'text/csv; charset=utf-8'
-    
+
     admin_email = session.get('admin_email', 'admin')
     app.logger.info(f"📥 CSV экспортирован пользователем {admin_email}")
-    
+
     return response
