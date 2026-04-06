@@ -1,73 +1,71 @@
-# --- Python ---
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-
-# --- Виртуальное окружение ---
-venv/
-ENV/
-env/
-.venv
-
-# --- IDE и редакторы ---
-.idea/
-.vscode/
-*.swp
-*.swo
-*~
-.DS_Store
-
-# --- Логи и временные файлы ---
-*.log
-logs/
-tmp/
-temp/
-
-# --- База данных (локальная) ---
-*.db
-*.sqlite3
-
-# --- Конфигурация окружения (БЕЗОПАСНОСТЬ) ---
-# Никогда не коммитить реальные ключи и пароли
+```
+# Environment files
 .env
 .env.local
-.env.production
+*.env.*
 
-# --- Специфика хостинга (Beget/Passenger) ---
-# Эти файлы создаются вручную на сервере и не должны перезаписываться при обновлении
-passenger_wsgi.py
-.htaccess
+# Logs and temporary files
+*.log
+*.tmp
+*.swp
 
-# Папка instance для хранения секретов и БД на хостинге
-instance/
+# Editors and IDEs
+.vscode/
+.idea/
 
-# --- Генерируемые файлы контента ---
-# robots.txt уникален для каждого домена, храним только шаблон
-robots.txt
-
-# ВАЖНО: sitemap.xml НЕ игнорируется!
-# Он генерируется скриптом и должен быть в репозитории для деплоя
-# (строки с sitemap.xml намеренно отсутствуют)
-
-# --- Тесты и покрытие ---
-.coverage
-htmlcov/
+# Dependencies and build artifacts
+node_modules/
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+dist/
+build/
+target/
+.gradle/
+.mypy_cache/
 .pytest_cache/
-.tox/
+coverage/
+htmlcov/
+.coverage
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Binary and compiled files
+*.exe
+*.dll
+*.so
+*.a
+*.o
+*.obj
+*.out
+*.class
+
+# Compressed files
+*.zip
+*.gz
+*.tar
+*.tgz
+*.bz2
+*.xz
+*.7z
+*.rar
+*.zst
+*.lz4
+*.lzh
+*.cab
+*.arj
+*.rpm
+*.deb
+*.Z
+*.lz
+*.lzo
+*.tar.gz
+*.tar.bz2
+*.tar.xz
+*.tar.zst
+```
