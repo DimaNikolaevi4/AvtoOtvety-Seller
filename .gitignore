@@ -1,41 +1,44 @@
-# --- Конфигурация и секреты (локальные настройки хостинга) ---
-.env
-.htaccess
-passenger_wsgi.py
-
-# --- Виртуальное окружение Python ---
+```
+# Dependencies
+node_modules/
 venv/
-ENV/
-env/
-
-# --- Кэш Python и байт-код ---
+.venv/
 __pycache__/
-*.py[cod]
-*$py.class
-*.so
+.mypy_cache/
+.pytest_cache/
+dist/
+build/
+target/
+.gradle/
 
-# --- Логи и временные файлы ---
-logs/
-tmp/
-restart.txt
-instance/
-
-# --- База данных (если локальная SQLite, но у вас MySQL, на всякий случай) ---
-*.db
-*.sqlite
-*.sqlite3
-
-# --- Файлы IDE и редакторов ---
-.idea/
+# Editors
 .vscode/
+.idea/
 *.swp
 *.swo
-*~
 
-# --- Системные файлы ---
+# System files
 .DS_Store
 Thumbs.db
+.env
+.env.local
+*.env.*
 
-# --- Статические файлы, генерируемые вручную или загружаемые пользователями ---
-static/avatars/
-uploads/
+# Logs and temp files
+*.log
+*.tmp
+coverage/
+htmlcov/
+.coverage
+
+# Compiled files
+*.pyc
+*.class
+*.o
+*.exe
+*.dll
+*.so
+*.a
+*.obj
+*.out
+```
