@@ -1,0 +1,34 @@
+# robots.txt для AvtoOtvety-Seller
+# Замените 'ваш-домен.ru' на ваш реальный домен при копировании в robots.txt
+
+User-agent: *
+# Разрешаем индексацию основных страниц
+Allow: /
+Allow: /catalog
+Allow: /services
+Allow: /about
+Allow: /contacts
+
+# Запрещаем индексацию админки и личных кабинетов
+Disallow: /admin
+Disallow: /dashboard
+Disallow: /profile
+Disallow: /login
+Disallow: /logout
+
+# Запрещаем доступ к техническим файлам и скриптам
+Disallow: /static/js/
+Disallow: /instance/
+Disallow: /scripts/
+Disallow: /.env
+Disallow: /config.py
+Disallow: /passenger_wsgi.py
+
+# Запрещаем поиск по сайту через параметры (чтобы избежать дублей)
+Disallow: /*?*
+
+# Указываем путь к карте сайта (обновите домен)
+Sitemap: https://ваш-домен.ru/sitemap.xml
+
+# Хост (опционально, для Яндекса)
+Host: https://ваш-домен.ru
