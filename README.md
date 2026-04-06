@@ -347,6 +347,27 @@ PassengerPython /home/<user>/public_html/venv/bin/python3
 </IfModule>
 ```
 
+#### 🔄 Генерация sitemap.xml
+
+После каждого обновления структуры сайта необходимо перегенерировать файл `sitemap.xml`:
+
+```bash
+# Активируйте виртуальное окружение
+source venv/bin/activate
+
+# Запустите скрипт генерации
+python scripts/generate_sitemap.py
+
+# Проверьте результат
+cat sitemap.xml
+```
+
+> 💡 **Важно:**  
+> - Скрипт автоматически обновляет дату `lastmod` для всех страниц  
+> - При добавлении новых маршрутов обновите список `STATIC_ROUTES` в `scripts/generate_sitemap.py`  
+> - Для продакшена установите переменную окружения `SITE_URL` в `.env`:  
+>   `SITE_URL=https://автоответыселлер.рф`
+
 ---
 
 ## 🔒 SEO для поддомена разработки
