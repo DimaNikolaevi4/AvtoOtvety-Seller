@@ -1,59 +1,73 @@
-```
-# Executable/binary files
-*.exe
-*.dll
-*.so
-*.o
-*.obj
-*.out
-*.class
-*.pyc
+# --- Python ---
 __pycache__/
-
-# Dependencies
-node_modules/
-venv/
-.venv/
-.env
-.env.local
-*.env.*
-
-# Build/dist directories
-dist/
+*.py[cod]
+*$py.class
+*.so
+.Python
 build/
-target/
-.gradle/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
 
-# IDE/editor files
-.vscode/
+# --- Виртуальное окружение ---
+venv/
+ENV/
+env/
+.venv
+
+# --- IDE и редакторы ---
 .idea/
+.vscode/
 *.swp
 *.swo
-*.tmp
-
-# System files
+*~
 .DS_Store
-Thumbs.db
 
-# Logs
+# --- Логи и временные файлы ---
 *.log
+logs/
+tmp/
+temp/
 
-# Coverage
-coverage/
-htmlcov/
+# --- База данных (локальная) ---
+*.db
+*.sqlite3
+
+# --- Конфигурация окружения (БЕЗОПАСНОСТЬ) ---
+# Никогда не коммитить реальные ключи и пароли
+.env
+.env.local
+.env.production
+
+# --- Специфика хостинга (Beget/Passenger) ---
+# Эти файлы создаются вручную на сервере и не должны перезаписываться при обновлении
+passenger_wsgi.py
+.htaccess
+
+# Папка instance для хранения секретов и БД на хостинге
+instance/
+
+# --- Генерируемые файлы контента ---
+# robots.txt уникален для каждого домена, храним только шаблон
+robots.txt
+
+# ВАЖНО: sitemap.xml НЕ игнорируется!
+# Он генерируется скриптом и должен быть в репозитории для деплоя
+# (строки с sitemap.xml намеренно отсутствуют)
+
+# --- Тесты и покрытие ---
 .coverage
-
-# Python specific
-*.pyc
-__pycache__/
-*.pyo
-*.pyd
-.Python
-*.so
-*.egg-info/
-.eggs/
-
-# Cache directories
-.mypy_cache/
+htmlcov/
 .pytest_cache/
-```
+.tox/
